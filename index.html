@@ -1,1 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Disable text selection */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #282828;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            touch-action: manipulation; /* Smooth touch interactions */
+        }
 
+        .container {
+            width: 100%;
+            max-width: 360px;
+            height: 100vh;
+            background-color: #444;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            font-size: 1.2rem;
+            cursor: pointer;
+            transform: perspective(500px) rotateY(15deg);
+            transition: transform 0.3s ease;
+        }
+
+        .search-icon:hover {
+            transform: perspective(500px) rotateY(0deg);
+        }
+
+        .search-bar {
+            width: 0;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            margin-left: 0.5rem;
+            border: 2px solid transparent;
+            border-radius: 5px;
+        }
+
+        .search-bar.active {
+            width: 150px; /* Adjust width as needed */
+            border-color: #4CAF50; /* Green border */
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            background-color: #555;
+            color: #fff;
+            padding-left: 1rem;
+            box-sizing: border-box;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .online-music-btn, .add-music-btn {
+            background-color: #1e90ff;
+            color: #fff;
+            border: 2px solid #4CAF50; /* Green border */
+            border-radius: 5px;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+        }
+
+        .online-music-btn i, .add-music-btn i {
+            font-size: 1rem;
+        }
+
+        .visualizer-container {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 1rem;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #222;
+            border-radius: 5px;
+            overflow: hidden;
+            perspective: 500px;
+            border: 2px solid #4CAF50; /* Green border */
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .developer-name {
+            position: absolute;
+            font-size: 1.5rem;
+            color: red;
+            font-weight: bold;
+            z-index: 1;
+            transform: scale(1);
+            transition: transform 0.1s ease;
+        }
+
+        .playlist-section {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .playlist {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .playlist li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #555;
+            margin-bottom: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border: 2px solid #4CAF50; /* Green border */
+            position: relative;
+        }
+
+        .playlist li:hover {
+            background-color: #666;
+        }
+
+        .playlist li .actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            position: absolute;
+            right: 10px;
+        }
+
+        .play-pause-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        .btn {
+            background: #1e90ff;
+            border: 2px solid #4CAF50; /* Green border */
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn.playing {
+            animation: rgbBorder 5s linear infinite;
+        }
+
+        @keyframes rgbBorder {
+            0% { border-color: #ff0000; }
+            33% { border-color: #00ff00; }
+            66% { border-color: #0000ff; }
+            100% { border-color: #ff0000; }
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0.5rem 0;
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        .progress-bar {
+            width: 60%;
+            height: 10px;
+            background-color: #555;
+            border-radius: 5px;
+            margin: 0 1rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation; /* Smooth touch interactions */
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            border-radius: 5px;
+            transition: width 0.1s linear;
+        }
+
+        .slider {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 15px;
+            height: 15px;
+            background-color: #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            transition: transform 0.1s ease;
+        }
+
+        .slider:active {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        /* Delete Confirmation Popup Styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background-color: #444;
+            padding: 1rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .popup-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .popup-buttons button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .popup-buttons button.confirm {
+            background-color: #ff4d4d; /* Red for Delete */
+            color: #fff;
+        }
+
+        .popup-buttons button.cancel {
+            background-color: #4CAF50; /* Green for Cancel */
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="search-container">
+                <div class="search-icon" id="search-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="search-bar" id="search-bar">
+                    <input type="text" id="search-input" placeholder="Search music...">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="online-music-btn" id="online-music-btn" onclick="window.open('https://m.soundcloud.com/', '_blank')">
+                    <i class="fas fa-music"></i> Online Music
+                </button>
+                <button class="add-music-btn" title="Add Music">
+                    Add Music
+                    <input type="file" class="file-input" accept="audio/*" multiple style="display: none;">
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualizer -->
+        <div class="visualizer-container">
+            <div class="developer-name">KhanOsama</div>
+            <canvas id="visualizer"></canvas>
+        </div>
+
+        <!-- Time Display and Progress Bar -->
+        <div class="time-display">
+            <span id="current-time">0:00</span>
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress" id="progress"></div>
+                <div class="slider" id="slider"></div>
+            </div>
+            <span id="duration">0:00</span>
+        </div>
+
+        <!-- Playlist Section -->
+        <div class="playlist-section">
+            <ul class="playlist"></ul>
+        </div>
+
+        <!-- Player Controls -->
+        <div class="controls">
+            <button class="btn" id="prev-btn">⏮</button>
+            <button class="btn" id="play-btn">⏯</button>
+            <button class="btn" id="next-btn">⏭</button>
+        </div>
+
+        <!-- Delete Confirmation Popup -->
+        <div class="popup" id="delete-popup">
+            <div class="popup-content">
+                <p>Are you sure you want to delete this song?</p>
+                <div class="popup-buttons">
+                    <button class="confirm" onclick="confirmDelete()">Delete</button>
+                    <button class="cancel" onclick="cancelDelete()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Music Player Logic
+        const fileInput = document.querySelector('.file-input');
+        const playlist = document.querySelector('.playlist');
+        const searchIcon = document.getElementById('search-icon');
+        const searchBar = document.getElementById('search-bar');
+        const searchInput = document.getElementById('search-input');
+        const audio = new Audio();
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        const progressBar = document.getElementById('progress-bar');
+        const progress = document.getElementById('progress');
+        const slider = document.getElementById('slider');
+        let currentSongIndex = 0;
+        let songs = JSON.parse(localStorage.getItem('songs')) || [];
+        let deleteIndex = null;
+        let isVisualizerRunning = false;
+        let searchTimeout;
+        let longPressTimer;
+        let isDragging = false;
+
+        // Web Audio API setup
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        // MediaSession API for background playback
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.setActionHandler('play', () => audio.play());
+            navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+            navigator.mediaSession.setActionHandler('previoustrack', () => playPrevious());
+            navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+        }
+
+        // Load songs from file input
+        document.querySelector('.add-music-btn').addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                const song = {
+                    name: file.name,
+                    url: URL.createObjectURL(file),
+                    lastPlayedTime: 0 // Track last played time
+                };
+                songs.push(song);
+
+                // Save file to cache
+                const cache = await caches.open('music-cache');
+                await cache.put(`/music/${file.name}`, new Response(file));
+            }
+            localStorage.setItem('songs', JSON.stringify(songs));
+            renderPlaylist();
+        });
+
+        // Render playlist
+        function renderPlaylist() {
+            playlist.innerHTML = '';
+            songs.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.textContent = song.name;
+                li.addEventListener('click', () => playSong(index));
+
+                // Add play/pause button
+                const playPauseBtn = document.createElement('button');
+                playPauseBtn.className = 'play-pause-btn';
+                playPauseBtn.innerHTML = '⏯';
+                playPauseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent song from playing
+                    if (currentSongIndex === index) {
+                        if (audio.paused) {
+                            audio.play();
+                            playPauseBtn.innerHTML = '⏸';
+                        } else {
+                            audio.pause();
+                            playPauseBtn.innerHTML = '⏯';
+                        }
+                    }
+                });
+
+                // Add actions container
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                actions.appendChild(playPauseBtn);
+
+                li.appendChild(actions);
+                playlist.appendChild(li);
+
+                // Long press to delete (1 second)
+                li.addEventListener('mousedown', () => {
+                    longPressTimer = setTimeout(() => {
+                        showDeletePopup(index);
+                    }, 1000); // 1 second
+                });
+
+                li.addEventListener('mouseup', () => {
+                    clearTimeout(longPressTimer);
+                });
+
+                li.addEventListener('touchstart', () => {
+                    longPressTimer = setTimeout(() => {
+                        showDeletePopup(index);
+                    }, 1000); // 1 second
+                });
+
+                li.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+            });
+        }
+
+        // Show delete confirmation popup
+        function showDeletePopup(index) {
+            deleteIndex = index;
+            document.getElementById('delete-popup').style.display = 'flex';
+        }
+
+        // Confirm delete
+        async function confirmDelete() {
+            if (deleteIndex !== null) {
+                const song = songs[deleteIndex];
+                songs.splice(deleteIndex, 1);
+                localStorage.setItem('songs', JSON.stringify(songs));
+
+                // Remove from cache
+                const cache = await caches.open('music-cache');
+                await cache.delete(`/music/${song.name}`);
+
+                renderPlaylist();
+                cancelDelete();
+            }
+        }
+
+        // Cancel delete
+        function cancelDelete() {
+            deleteIndex = null;
+            document.getElementById('delete-popup').style.display = 'none';
+        }
+
+        // Play selected song
+        async function playSong(index) {
+            if (index < 0 || index >= songs.length) return;
+            currentSongIndex = index;
+            const song = songs[index];
+
+            // Check cache for the song
+            const cache = await caches.open('music-cache');
+            const response = await cache.match(`/music/${song.name}`);
+
+            if (response) {
+                const blob = await response.blob();
+                audio.src = URL.createObjectURL(blob);
+            } else {
+                audio.src = song.url;
+            }
+
+            // Start playback from the beginning
+            audio.currentTime = 0;
+            audio.play();
+            updatePlaylistUI();
+
+            // Update MediaSession metadata
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: song.name,
+                    artist: 'KhanOsama'
+                });
+            }
+        }
+
+        // Update playlist UI (highlight current song)
+        function updatePlaylistUI() {
+            const items = playlist.querySelectorAll('li');
+            items.forEach((item, index) => {
+                item.style.backgroundColor = index === currentSongIndex ? '#1e90ff' : '#555';
+            });
+        }
+
+        // Play/Pause button
+        const playButton = document.getElementById('play-btn');
+        playButton.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                playButton.textContent = '⏸';
+                playButton.classList.add('playing');
+            } else {
+                audio.pause();
+                playButton.textContent = '⏯';
+                playButton.classList.remove('playing');
+            }
+        });
+
+        // Next button
+        function playNext() {
+            playSong((currentSongIndex + 1) % songs.length);
+        }
+        document.getElementById('next-btn').addEventListener('click', playNext);
+
+        // Previous button
+        function playPrevious() {
+            playSong((currentSongIndex - 1 + songs.length) % songs.length);
+        }
+        document.getElementById('prev-btn').addEventListener('click', playPrevious);
+
+        // Automatically play next song
+        audio.addEventListener('ended', () => {
+            playSong((currentSongIndex + 1) % songs.length);
+        });
+
+        // Save last played time when paused
+        audio.addEventListener('pause', () => {
+            if (songs[currentSongIndex]) {
+                songs[currentSongIndex].lastPlayedTime = audio.currentTime;
+                localStorage.setItem('songs', JSON.stringify(songs));
+            }
+        });
+
+        // Wave Visualizer
+        function drawWaveVisualizer() {
+            if (!isVisualizerRunning) return;
+            requestAnimationFrame(drawWaveVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+
+            ctx.fillStyle = '#222';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+
+                // Draw wave bars
+                ctx.fillStyle = `rgba(0, 128, 255, ${barHeight / 255})`;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+
+                x += barWidth + 1;
+            }
+
+            // Update "KhanOsama" text size based on frequency
+            const averageFrequency = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+            const scale = 1 + (averageFrequency / 255); // Scale based on frequency
+            document.querySelector('.developer-name').style.transform = `scale(${scale})`;
+        }
+
+        // Start visualizer when audio plays
+        audio.addEventListener('play', () => {
+            isVisualizerRunning = true;
+            audioContext.resume().then(() => {
+                drawWaveVisualizer();
+            });
+        });
+
+        // Stop visualizer when audio pauses
+        audio.addEventListener('pause', () => {
+            isVisualizerRunning = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.querySelector('.developer-name').style.transform = 'scale(1)'; // Reset text size
+        });
+
+        // Progress Bar Click to Seek
+        progressBar.addEventListener('click', (e) => {
+            if (!isDragging) {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                audio.currentTime = pos * audio.duration;
+            }
+        });
+
+        // Slider functionality
+        slider.addEventListener('mousedown', () => {
+            isDragging = true;
+        });
+
+        slider.addEventListener('touchstart', () => {
+            isDragging = true;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+                audio.currentTime = pos * audio.duration;
+            }
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = Math.min(Math.max((e.touches[0].clientX - rect.left) / rect.width, 0), 1);
+                audio.currentTime = pos * audio.duration;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Update progress bar and time display
+        audio.addEventListener('timeupdate', () => {
+            const currentTime = audio.currentTime;
+            const duration = audio.duration;
+            document.getElementById('current-time').textContent = formatTime(currentTime);
+            document.getElementById('duration').textContent = formatTime(duration);
+            progress.style.width = `${(currentTime / duration) * 100}%`;
+            slider.style.left = `${(currentTime / duration) * 100}%`;
+        });
+
+        // Format time
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Search bar functionality
+        searchIcon.addEventListener('click', () => {
+            if (searchBar.classList.contains('active')) {
+                searchBar.classList.remove('active');
+                searchInput.blur(); // Close the keyboard
+            } else {
+                searchBar.classList.add('active');
+                searchInput.focus();
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchBar.classList.remove('active');
+                    searchInput.blur(); // Close the keyboard
+                }, 20000); // 20 seconds
+            }
+        });
+
+        // Search functionality
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filteredSongs = songs.filter(song => song.name.toLowerCase().includes(query));
+            renderFilteredPlaylist(filteredSongs);
+        });
+
+        function renderFilteredPlaylist(filteredSongs) {
+            playlist.innerHTML = '';
+            filteredSongs.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.textContent = song.name;
+                li.addEventListener('click', () => playSong(songs.indexOf(song)));
+
+                // Add play/pause button
+                const playPauseBtn = document.createElement('button');
+                playPauseBtn.className = 'play-pause-btn';
+                playPauseBtn.innerHTML = '⏯';
+                playPauseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent song from playing
+                    if (currentSongIndex === index) {
+                        if (audio.paused) {
+                            audio.play();
+                            playPauseBtn.innerHTML = '⏸';
+                        } else {
+                            audio.pause();
+                            playPauseBtn.innerHTML = '⏯';
+                        }
+                    }
+                });
+
+                // Add actions container
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+                actions.appendChild(playPauseBtn);
+
+                li.appendChild(actions);
+                playlist.appendChild(li);
+            });
+        }
+
+        // Initialize playlist on page load
+        renderPlaylist();
+    </script>
+</body>
+</html>
