@@ -134,7 +134,7 @@
         .developer-name {
             position: absolute;
             font-size: 1.5rem;
-            color: red;
+            color: blue; /* Changed to blue */
             font-weight: bold;
             z-index: 1;
             transform: scale(1);
@@ -168,22 +168,6 @@
 
         .playlist li:hover {
             background-color: #666;
-        }
-
-        .playlist li .actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            position: absolute;
-            right: 10px;
-        }
-
-        .play-pause-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1rem;
-            cursor: pointer;
         }
 
         .controls {
@@ -345,7 +329,7 @@
 
         <!-- Visualizer -->
         <div class="visualizer-container">
-            <div class="developer-name">KhanOsama</div>
+            <div class="developer-name">Music Player</div>
             <canvas id="visualizer"></canvas>
         </div>
 
@@ -453,31 +437,6 @@
                 li.textContent = song.name;
                 li.addEventListener('click', () => playSong(index));
 
-                // Add play/pause button
-                const playPauseBtn = document.createElement('button');
-                playPauseBtn.className = 'play-pause-btn';
-                playPauseBtn.innerHTML = '⏯';
-                playPauseBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent song from playing
-                    if (currentSongIndex === index) {
-                        if (audio.paused) {
-                            audio.play();
-                            playPauseBtn.innerHTML = '⏸';
-                        } else {
-                            audio.pause();
-                            playPauseBtn.innerHTML = '⏯';
-                        }
-                    }
-                });
-
-                // Add actions container
-                const actions = document.createElement('div');
-                actions.className = 'actions';
-                actions.appendChild(playPauseBtn);
-
-                li.appendChild(actions);
-                playlist.appendChild(li);
-
                 // Long press to delete (1 second)
                 li.addEventListener('mousedown', () => {
                     longPressTimer = setTimeout(() => {
@@ -498,6 +457,8 @@
                 li.addEventListener('touchend', () => {
                     clearTimeout(longPressTimer);
                 });
+
+                playlist.appendChild(li);
             });
         }
 
@@ -555,7 +516,7 @@
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: song.name,
-                    artist: 'KhanOsama'
+                    artist: 'Music Player'
                 });
             }
         }
@@ -607,10 +568,10 @@
             }
         });
 
-        // Wave Visualizer
-        function drawWaveVisualizer() {
+        // Fire Visualizer
+        function drawFireVisualizer() {
             if (!isVisualizerRunning) return;
-            requestAnimationFrame(drawWaveVisualizer);
+            requestAnimationFrame(drawFireVisualizer);
             analyser.getByteFrequencyData(dataArray);
 
             ctx.fillStyle = '#222';
@@ -623,14 +584,14 @@
             for (let i = 0; i < bufferLength; i++) {
                 barHeight = dataArray[i] / 2;
 
-                // Draw wave bars
-                ctx.fillStyle = `rgba(0, 128, 255, ${barHeight / 255})`;
+                // Draw fire bars
+                ctx.fillStyle = `rgba(255, 165, 0, ${barHeight / 255})`; // Orange color for fire
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
 
                 x += barWidth + 1;
             }
 
-            // Update "KhanOsama" text size based on frequency
+            // Update "Music Player" text size based on frequency
             const averageFrequency = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
             const scale = 1 + (averageFrequency / 255); // Scale based on frequency
             document.querySelector('.developer-name').style.transform = `scale(${scale})`;
@@ -640,7 +601,7 @@
         audio.addEventListener('play', () => {
             isVisualizerRunning = true;
             audioContext.resume().then(() => {
-                drawWaveVisualizer();
+                drawFireVisualizer();
             });
         });
 
@@ -740,30 +701,6 @@
                 const li = document.createElement('li');
                 li.textContent = song.name;
                 li.addEventListener('click', () => playSong(songs.indexOf(song)));
-
-                // Add play/pause button
-                const playPauseBtn = document.createElement('button');
-                playPauseBtn.className = 'play-pause-btn';
-                playPauseBtn.innerHTML = '⏯';
-                playPauseBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent song from playing
-                    if (currentSongIndex === index) {
-                        if (audio.paused) {
-                            audio.play();
-                            playPauseBtn.innerHTML = '⏸';
-                        } else {
-                            audio.pause();
-                            playPauseBtn.innerHTML = '⏯';
-                        }
-                    }
-                });
-
-                // Add actions container
-                const actions = document.createElement('div');
-                actions.className = 'actions';
-                actions.appendChild(playPauseBtn);
-
-                li.appendChild(actions);
                 playlist.appendChild(li);
             });
         }
